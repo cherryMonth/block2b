@@ -1,0 +1,92 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: caffe
+spec:
+  replicas: 1
+  minReadySeconds: 20
+  strategy:
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      name: caffe
+      labels:
+        app: caffe
+    spec:
+      containers:
+      - args:
+        - bash /bin/notebook.sh
+        command:
+        - /bin/bash
+        - -c
+        image: idc-5:5000/transwarp/mylab:v1
+        name: caffe-pod
+        imagePullPolicy: Always
+        env:
+          - name: TERM
+            value: dumb
+          - name: USER
+            value: songjian
+          - name: JUPTER
+            value: jupyter
+          - name: LAB
+            value: lab
+          - name: NOTEBOOK_PASSWORD
+            value: --LabApp.password=''
+          - name: JUPYTER_USR_HOME
+            value: /home/$(USER) 
+          - name: NOTEBOOK_TERMINADO_SETTINGS
+            value: '--LabApp.terminado_settings=''{"headers": {"Content-Security-Policy":"frame-ancestors
+              *:* ''self''"}}'''
+          - name: JUP_PORT
+            value: --port=8888
+          - name: JUP_NO_BROWSER
+            value: --no-browser
+          - name: PYPI_SERVER_URL
+            value: https://pypi.tuna.tsinghua.edu.cn/simple
+          - name: EXTRA_HOST
+            value: pypi.tuna.tsinghua.edu.cn
+          - name: HOME
+            value: /home/$(USER)
+          - name: NOTEBOOK_WEBSOCKET_URL
+            value: --LabApp.websocket_url=
+          - name: NOTEBOOK_DIR
+            value: --notebook-dir=/home/$(USER)
+          - name: EXTRA_URL_CMD
+          - name: F_C_WRITE_CLOSE
+            value: --FileContentsManager.use_atomic_writing=False
+          - name: JUP_IP
+            value: --ip='0.0.0.0'
+          - name: NOTEBOOK_ALLOW_ORIGIN
+            value: --LabApp.allow_origin='*'
+          - name: JUP_ALLOW_ROOT
+            value: --allow-root
+          - name: NOTEBOOK_TOKEN
+            value: --LabApp.token=''
+        volumeMounts:
+        - name: data
+          mountPath: /home
+        readinessProbe:
+          periodSeconds: 1
+          httpGet:
+            path: /lab?
+            port: 8888
+        resources:
+          requests:
+            cpu: 4
+            memory: 4Gi
+            nvidia.com/gpu: 1
+          limits:
+            cpu: 4
+            memory: 4Gi
+            nvidia.com/gpu: 1
+      volumes:
+      - name: data
+        hostPath:
+          path: /mnt/caffe
+      hostNetwork: true
+      nodeSelector:
+        kubernetes.io/hostname: idc-7
